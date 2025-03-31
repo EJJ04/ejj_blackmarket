@@ -9,7 +9,6 @@ lua54 'yes'
 
 shared_scripts {
     '@ox_lib/init.lua',
-    '@es_extended/imports.lua',
     'config.lua'
 }
 
@@ -22,7 +21,6 @@ server_scripts {
 }
 
 dependencies {
-    'es_extended',  
     'ox_lib',
     'ox_target',
     'ox_inventory'
