@@ -1,85 +1,31 @@
-local spawnedPed = nil
-local currentPeds = 0
+local locations = {
+    vector4(-1143.8789, -391.0011, 36.4707, 187.1519),
+    vector4(-1142.5126, -390.9631, 36.4861, 185.6075),
+    vector4(-1145.2208, -391.1126, 36.4472, 185.9960),
+}
 
-local function GetRandomLocation()
-    return Config.PedLocations[math.random(1, #Config.PedLocations)]
-end
+function SpawnPed(model, position)
+    lib.requestModel(model)
+    while not HasModelLoaded(model) do Wait(0) end
+    local ped = CreatePed(0, model, position.x, position.y, position.z - 1.0, position.w, false, true)
+    FreezeEntityPosition(ped, true)
+    SetBlockingOfNonTemporaryEvents(ped, true)
+    SetEntityInvincible(ped, true)
 
-local function OpenShop()
-    exports.ox_inventory:openInventory('shop', {type = Config.Name})
-end
-
-local function SpawnPed()
-    if currentPeds >= Config.PedSettings.maxPeds then
-        return
-    end
-
-    if spawnedPed then
-        DeleteEntity(spawnedPed)
-        spawnedPed = nil
-        currentPeds = 0
-    end
-
-    local location = GetRandomLocation()
-    
-    local modelHash = lib.requestModel(Config.PedModel)
-    if not modelHash then return end
-
-    spawnedPed = CreatePed(4, modelHash, location.x, location.y, location.z - 1.0, location.w, false, true)
-    if not spawnedPed or spawnedPed == 0 then return end
-    
-    SetEntityHeading(spawnedPed, location.w)
-    
-    if Config.PedSettings.freeze then
-        FreezeEntityPosition(spawnedPed, true)
-    end
-    
-    if Config.PedSettings.invincible then
-        SetEntityInvincible(spawnedPed, true)
-    end
-    
-    if Config.PedSettings.blockEvents then
-        SetBlockingOfNonTemporaryEvents(spawnedPed, true)
-    end
-    
-    TaskStartScenarioInPlace(spawnedPed, Config.PedSettings.scenario, 0, true)
-    
-    exports.ox_target:addLocalEntity(spawnedPed, {
+    exports.ox_target:addLocalEntity(ped, {
         {
-            name = 'blackmarket_shop',
-            icon = 'fas fa-shopping-bag',
-            label = Config.Label,
-            onSelect = function()
-                OpenShop()
+            label = 'Open Blackmarket',
+            icon = 'fas fa-comments',
+            distance = 2.5,
+            onSelect = function(data)
+                exports.ox_inventory:openInventory('shop', { type = 'BM', id = 1 })
             end
         }
     })
-    
-    currentPeds = currentPeds + 1
+
+    return ped
 end
 
-AddEventHandler('onResourceStart', function(resourceName)
-    if (GetCurrentResourceName() ~= resourceName) then
-        return
-    end
-    
-    math.randomseed(GetGameTimer())
-    
-    lib.waitFor(function()
-        return NetworkIsSessionStarted()
-    end, 'Failed to start session', 10000)
-    
-    SpawnPed()
-end)
-
-AddEventHandler('onResourceStop', function(resourceName)
-    if (GetCurrentResourceName() ~= resourceName) then
-        return
-    end
-    
-    if spawnedPed then
-        DeleteEntity(spawnedPed)
-        spawnedPed = nil
-        currentPeds = 0
-    end
-end)
+local randomIndex = math.random(1, #locations)
+local chosenPosition = locations[randomIndex]
+SpawnPed('g_m_importexport_01', chosenPosition)
